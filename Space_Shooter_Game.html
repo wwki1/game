@@ -1,0 +1,162 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Space Shooter Game</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background-color: black;
+      overflow: hidden;
+      font-family: 'Arial', sans-serif;
+    }
+    canvas {
+      display: block;
+      margin: 0 auto;
+      background: radial-gradient(circle at center, #001d3d, #000);
+      width: 100%;
+      max-width: 400px;
+      height: auto;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="400" height="600"></canvas>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    // الطائرة
+    const player = {
+      x: canvas.width / 2 - 15,
+      y: canvas.height - 40,
+      width: 30,
+      height: 30,
+      speed: 5
+    };
+
+    const bullets = [];
+    const enemies = [];
+    let score = 0;
+
+    const playerImage = new Image();
+    playerImage.src = 'https://i.imgur.com/u1QXB7P.png';
+
+    let playerImageLoaded = false;
+    playerImage.onload = function () {
+      playerImageLoaded = true;
+    };
+
+    // رسم الطائرة
+    function drawPlayer() {
+      if (playerImageLoaded) {
+        ctx.drawImage(playerImage, player.x, player.y, player.width, player.height);
+      }
+    }
+
+    // تحريك الطائرة
+    function movePlayer() {
+      if (keys["ArrowLeft"] && player.x > 0) player.x -= player.speed;
+      if (keys["ArrowRight"] && player.x < canvas.width - player.width) player.x += player.speed;
+    }
+
+    // إطلاق الرصاص تلقائيًا
+    function shootBullet() {
+      bullets.push({
+        x: player.x + player.width / 2 - 2.5,
+        y: player.y,
+        width: 5,
+        height: 10,
+        color: "yellow",
+        speed: 7
+      });
+    }
+
+    setInterval(shootBullet, 300); // إطلاق الرصاص تلقائي كل 300ms
+
+    function drawBullets() {
+      bullets.forEach((bullet, index) => {
+        bullet.y -= bullet.speed;
+        if (bullet.y < 0) bullets.splice(index, 1);
+        ctx.fillStyle = bullet.color;
+        ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+      });
+    }
+
+    // الوحوش
+    function spawnEnemy() {
+      const x = Math.random() * (canvas.width - 30);
+      enemies.push({
+        x: x,
+        y: 0,
+        width: 30,
+        height: 30,
+        color: "red",
+        speed: 2
+      });
+    }
+
+    function drawEnemies() {
+      enemies.forEach((enemy, index) => {
+        enemy.y += enemy.speed;
+        if (enemy.y > canvas.height) enemies.splice(index, 1);
+        ctx.fillStyle = enemy.color;
+        ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+      });
+    }
+
+    // كشف التصادم
+    function detectCollisions() {
+      bullets.forEach((bullet, bIndex) => {
+        enemies.forEach((enemy, eIndex) => {
+          if (
+            bullet.x < enemy.x + enemy.width &&
+            bullet.x + bullet.width > enemy.x &&
+            bullet.y < enemy.y + enemy.height &&
+            bullet.y + bullet.height > enemy.y
+          ) {
+            bullets.splice(bIndex, 1);
+            enemies.splice(eIndex, 1);
+            score += 10;
+          }
+        });
+      });
+    }
+
+    // لوحة النقاط
+    function drawScore() {
+      ctx.fillStyle = "white";
+      ctx.font = "16px Arial";
+      ctx.fillText(`Score: ${score}`, 10, 20);
+    }
+
+    // مفاتيح التحكم
+    const keys = {};
+    window.addEventListener("keydown", (e) => keys[e.key] = true);
+    window.addEventListener("keyup", (e) => keys[e.key] = false);
+
+    // التحديث والرسم
+    function gameLoop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawPlayer();
+      movePlayer();
+      drawBullets();
+      drawEnemies();
+      detectCollisions();
+      drawScore();
+      requestAnimationFrame(gameLoop);
+    }
+
+    // بدء اللعبة
+    setInterval(spawnEnemy, 1000);
+    gameLoop();
+  </script>
+</body>
+</html>
